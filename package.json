@@ -1,0 +1,10 @@
+{
+  "name": "dronejack",
+  "description": "Dronejack is a node web-based application to take control of a Parrot drone",
+  "version": "0.1.0",
+  "dependencies": {
+    "ar-drone": "git://github.com/felixge/node-ar-drone.git",
+    "express": "^4.15.2",
+    "socket.io": "^2.0.1"
+  }
+}
