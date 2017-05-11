@@ -3,7 +3,7 @@
   "description": "Dronejack is a node web-based application to take control of a Parrot drone",
   "version": "0.1.0",
   "dependencies": {
-    "ar-drone": "git://github.com/felixge/node-ar-drone.git",
+    "ar-drone": "^0.3.3",
     "arpscan": "^0.5.0",
     "express": "^4.15.2",
     "node-wifi": "^1.2.4",

