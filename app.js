@@ -1,6 +1,7 @@
 // Utils
 var os = require("os");
 var cp = require('child_process');
+var commandExistsSync = require('command-exists').sync;
 var path = require("path");
 var prompt = require('prompt');
 var wifi = require('node-wifi');
@@ -14,6 +15,10 @@ var http = require('http').Server(app);
 app.use(express.static('public'));
 
 // Requirements Checks
+if (!commandExistsSync('arp-scan')) { console.log("Error : missing command 'arp-scan' please install it and retry"); process.exit(); }
+if (!commandExistsSync('aireplay-ng')) { console.log("Error : missing command 'aireplay-ng' please install 'aircrack-ng' and retry"); process.exit(); }
+
+// Init values, wifi and launch attack
 var iface = 'wlan0';
 var target = null;
 var attackMAC = null;

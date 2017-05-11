@@ -5,6 +5,7 @@
   "dependencies": {
     "ar-drone": "^0.3.3",
     "arpscan": "^0.5.0",
+    "command-exists": "^1.2.2",
     "express": "^4.15.2",
     "node-wifi": "^1.2.4",
     "prompt": "^1.0.0",
