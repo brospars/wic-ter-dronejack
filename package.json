@@ -4,7 +4,10 @@
   "version": "0.1.0",
   "dependencies": {
     "ar-drone": "git://github.com/felixge/node-ar-drone.git",
+    "arpscan": "^0.5.0",
     "express": "^4.15.2",
+    "node-wifi": "^1.2.4",
+    "prompt": "^1.0.0",
     "socket.io": "^2.0.1"
   }
 }
