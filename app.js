@@ -124,6 +124,8 @@ function launchDeauth() {
         resolve();
       } else{
 
+        console.log(deauthTargets);
+
         //Confirm prompt before deauth
         var schema = {
           properties: {
