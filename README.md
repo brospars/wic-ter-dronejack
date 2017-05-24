@@ -5,9 +5,13 @@ Dronejack is our master degree research project done at INRIA about drone securi
 
 Table of Contents
 ---------
+
 <!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
 
 - [Security Vulnerabilities](#security-vulnerabilities)
+	- [Spoof navigation](#spoof-navigation)
+		- [How it works](#how-it-works)
+		- [How to use](#how-to-use)
 	- [Deauth attack and takeover the drone](#deauth-attack-and-takeover-the-drone)
 		- [Requirements](#requirements)
 		- [Getting started](#getting-started)
@@ -27,6 +31,7 @@ Table of Contents
 <!-- /TOC -->
 
 -----
+
 # Security Vulnerabilities
 
 ## Spoof navigation
