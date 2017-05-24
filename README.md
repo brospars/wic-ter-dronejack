@@ -21,11 +21,18 @@ This app was made with and for Kali Linux. It requires a bunch of external tools
 4. Takeover the drone
 
 
-## Video hijack
+## Spy on the video
 
-The next step in our drone attack is to hijack the video capture and stream a movie clip instead
-of the video feed. In order to achieve this we'll need to cross compile a linux kernel modules for ARM.
+The next attack is to spy on the video stream without the real user knowing. Because the video stream rely on TCP to send data to the first connected user we can't connect to it easily without disconnecting the owner. So the attack consist of spying on the wifi communication between the drone and the owner's phone (using wireshark)
 
+#### Record a video without user knowing
+
+1. start wireshark and filter video packets `ip.src==192.168.1.1 and tcp.port==5555`
+2. capture packets for a while and save it `capture.pcap`
+3. extract packets raw data `tcptrace -e capture.pcap`
+4. convert dat files to avi `ffmpeg -f h264 -i *.dat capture.avi`
+
+#### Realtime video streaming
 @todo
 
 ## Cross compiling for AR Drone (ARM)
