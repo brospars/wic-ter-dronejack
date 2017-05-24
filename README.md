@@ -27,8 +27,28 @@ Table of Contents
 <!-- /TOC -->
 
 -----
-
 # Security Vulnerabilities
+
+## Spoof navigation
+The first basic attack apart from telnet : `shutdown now` (which might hurt the drone), is to spoof a navigation control packet using **scapy**.
+
+### How it works
+@todo
+
+### How to use
+
+You can find the python script under `/attack/spoof-navcontrol/spoof.py`. To use you'll need to connect to the drone wifi and get the drone and phone infos, such as ips and mac addresses.
+
+`python spoof.py [params]`
+
+Params :  
+`--command=X` to set the command `LAND`, `TAKEOFF`, `RESET`  
+`--seq=X` to manually set the sequence number (default: `999999`)  
+`--phoneip=X` to manually set the owner device ip  
+`--droneip=X` to manually set the drone ip (default: `192.168.1.1`)  
+`--phonemac=X` to set the owner device mac  
+`--dronemac=X` to set the drone mac (default: `90:03:b7:e8:55:72`)  
+
 ## Deauth attack and takeover the drone
 Web-based application to take control of a Parrot drone. It is greatly inspired by **skyjack** [[5]](#references) for the takover part and **drone-browser** [[6]](#references) for the interface and control.
 
@@ -213,3 +233,4 @@ Save and close the file (`ctrl+x`) and run `make`. If everything run without err
 - [4] [Node AR Drone](https://github.com/felixge/node-ar-drone)
 - [5] [Skyjack](https://github.com/samyk/skyjack) - Samy Kamkar
 - [6] [Drone Browser](https://github.com/functino/drone-browser)
+- [7] [Let's hack a drone!](https://github.com/markszabo/drone-hacking) - Mark Szabó
