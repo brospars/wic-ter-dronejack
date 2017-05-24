@@ -22,6 +22,7 @@ Table of Contents
 	- [Securing the Wifi connection](#securing-the-wifi-connection)
 		- [Compiling WPA](#compiling-wpa)
 		- [Install and run WPA on the drone](#install-and-run-wpa-on-the-drone)
+- [References](#references)
 
 <!-- /TOC -->
 
@@ -29,7 +30,7 @@ Table of Contents
 
 # Security Vulnerabilities
 ## Deauth attack and takeover the drone
-Web-based application to take control of a Parrot drone. It is greatly inspired by https://github.com/samyk/skyjack for the takover part and https://github.com/functino/drone-browser for the interface and control which use https://github.com/felixge/node-ar-drone.
+Web-based application to take control of a Parrot drone. It is greatly inspired by **skyjack** [[5]](#references) for the takover part and **drone-browser** [[6]](#references) for the interface and control.
 
 ### Requirements
 
@@ -203,3 +204,12 @@ Save and close the file (`ctrl+x`) and run `make`. If everything run without err
 ### Install and run WPA on the drone
 
 @todo
+
+# References
+
+- [1] [Hacking and securing the AR.Drone 2.0 quadcopter](https://www.researchgate.net/publication/260420467_Hacking_and_securing_the_ARDrone_20_quadcopter_-_Investigations_for_improving_the_security_of_a_toy) - Johann Pleban & Reiner Creutzburg
+- [2] [ARDrone corruption](https://www.researchgate.net/publication/257681090_ARDrone_corruption) - Eddy Deligne
+- [3] [AR.Drone: security threat analysis and exemplary attack totrack persons](https://www.researchgate.net/publication/258713432_ARDrone_Security_threat_analysis_and_exemplary_attack_to_track_persons) - Fred Samlanda, Jana Fruthb, Mario Hildebrandtb, Tobias Hoppeb, Jana Dittmann
+- [4] [Node AR Drone](https://github.com/felixge/node-ar-drone)
+- [5] [Skyjack](https://github.com/samyk/skyjack) - Samy Kamkar
+- [6] [Drone Browser](https://github.com/functino/drone-browser)
