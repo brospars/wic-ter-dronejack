@@ -1,10 +1,37 @@
-# Dronejack (TER Master WIC)
+Dronejack (TER Master WIC)
+=====
+
 Dronejack is our master degree research project done at INRIA about drone security. We used Parrot drones (AR Drone) for this projet but I'm sure it can be applied to any drone with open communications.The purpose of this project is to show the vulnerabilities of these drones and how to secure them.
 
+Table of Contents
+---------
+<!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
+
+- [Security Vulnerabilities](#security-vulnerabilities)
+	- [Deauth attack and takeover the drone](#deauth-attack-and-takeover-the-drone)
+		- [Requirements](#requirements)
+		- [Getting started](#getting-started)
+	- [Video spying](#video-spying)
+		- [Record a video without user knowing](#record-a-video-without-user-knowing)
+		- [Realtime video streaming](#realtime-video-streaming)
+- [Cross compiling for AR Drone (ARM)](#cross-compiling-for-ar-drone-arm)
+	- [On linux system](#on-linux-system)
+	- [Using Vagrant (Virtual Machine)](#using-vagrant-virtual-machine)
+	- [Compiling a first C program](#compiling-a-first-c-program)
+- [Securing the AR Drone](#securing-the-ar-drone)
+	- [Securing the Wifi connection](#securing-the-wifi-connection)
+		- [Compiling WPA](#compiling-wpa)
+		- [Install and run WPA on the drone](#install-and-run-wpa-on-the-drone)
+
+<!-- /TOC -->
+
+-----
+
+# Security Vulnerabilities
 ## Deauth attack and takeover the drone
 Web-based application to take control of a Parrot drone. It is greatly inspired by https://github.com/samyk/skyjack for the takover part and https://github.com/functino/drone-browser for the interface and control which use https://github.com/felixge/node-ar-drone.
 
-#### Requirements
+### Requirements
 
 This app was made with and for Kali Linux. It requires a bunch of external tools which are available natively on Kali.
 
@@ -13,7 +40,7 @@ This app was made with and for Kali Linux. It requires a bunch of external tools
 - Aircrack-ng
 - Arp-scan
 
-#### Getting started
+### Getting started
 
 1. Run `node app.js`
 2. Follow CLI steps (scan, deauth, connect, init navigation)
@@ -21,23 +48,23 @@ This app was made with and for Kali Linux. It requires a bunch of external tools
 4. Takeover the drone
 
 
-## Spy on the video
+## Video spying
 
 The next attack is to spy on the video stream without the real user knowing. Because the video stream rely on TCP to send data to the first connected user we can't connect to it easily without disconnecting the owner. So the attack consist of spying on the wifi communication between the drone and the owner's phone (using wireshark)
 
-#### Record a video without user knowing
+### Record a video without user knowing
 
 1. start wireshark and filter video packets `ip.src==192.168.1.1 and tcp.port==5555`
 2. capture packets for a while and save it `capture.pcap`
 3. extract packets raw data `tcptrace -e capture.pcap`
 4. convert dat files to avi `ffmpeg -f h264 -i *.dat capture.avi`
 
-#### Realtime video streaming
+### Realtime video streaming
 @todo
 
-## Cross compiling for AR Drone (ARM)
+# Cross compiling for AR Drone (ARM)
 
-#### On linux system
+## On linux system
 The first step is to successfully compile a C program for AR Drone. To do that we'll need to install some packages first.
 
 ```sh
@@ -65,11 +92,11 @@ Then you will need to set up environement variables to help finding the compiler
 ```sh
 echo "Setting up the Cross Compiler Environment"
 
-# Path to bin directory of the compiler
-export PATH="YOUR_PATH/arm-2009q3/bin":$PATH
+ # Path to bin directory of the compiler
+export PATH="YOUR_PATH/arm-2013.05/bin":$PATH
 
-# prefix of all the tools in a toolchain
-export CCPREFIX="YOUR_PATH/arm-2009q3/bin/arm-none-linux-gnueabi-"
+ # prefix of all the tools in a toolchain
+export CCPREFIX="YOUR_PATH/arm-2013.05/bin/arm-none-linux-gnueabi-"
 ```
 
 Now make it executable and add it to your `.bashrc`
@@ -81,7 +108,7 @@ echo "source YOUR_PATH/setupARMCrossCompile" >> ~/.bashrc
 
 Close and Reopen the terminal. If you see `Setting up the Cross Compiler Environment` your compiler environemet should be setup.
 
-#### Using Vagrant (Virtual Machine)
+## Using Vagrant (Virtual Machine)
 
 1. install [vagrant](https://www.vagrantup.com/)
 2. install [virtualbox](https://www.virtualbox.org/)
@@ -92,15 +119,15 @@ Close and Reopen the terminal. If you see `Setting up the Cross Compiler Environ
 Then in the vm install the needed programs and tools
 
 ```sh
-# compiling programs and curl
+ # compiling programs and curl
 sudo apt-get install build-essential curl
-# retrieve arm toolchain from code sourcery
+ # retrieve arm toolchain from code sourcery
 curl -OL https://sourcery.mentor.com/public/gnu_toolchain/arm-none-linux-gnueabi/arm-2013.05-24-arm-none-linux-gnueabi-i686-pc-linux-gnu.tar.bz2
-# extract it
+ # extract it
 tar -xf arm-2013.05-24-arm-none-linux-gnueabi-i686-pc-linux-gnu.tar.bz2
-# add ownership
+ # add ownership
 chown -R vagrant:vagrant arm-2013.05
-# remove archive to save space
+ # remove archive to save space
 rm -rf arm-2013.05-24-arm-none-linux-gnueabi-i686-pc-linux-gnu.tar.bz2
 ```
 
@@ -110,12 +137,12 @@ To pass files to the vagrant box you can use scp (winSCP for instance) :
 - id : vagrant
 - pass : vagrant
 
-#### Compiling a first C program
+## Compiling a first C program
 
 It's now time to make your first C program and test it on your drone.
 
 ```c
-#include <stdio.h>
+ #include <stdio.h>
 int main(){
  printf("Hello Drone\n");
  return 0;
@@ -127,7 +154,7 @@ Compile, put it on the drone (FTP) and run the program (TELNET) to see if it wor
 ```sh
 arm-none-linux-gnueabi-gcc hello.c -o Drone_hello
 
-## [...] Connect to the drone Wifi, transfer the file via ftp then :
+ ## [...] Connect to the drone Wifi, transfer the file via ftp then :
 telnet 192.168.1.1
 cd /data/video
 chmod +x Drone_hello
@@ -136,17 +163,18 @@ chmod +x Drone_hello
 
 It should print `Hello Drone` in the telnet console.
 
-## Securing the drone Wifi
-#### Compiling WPA
+# Securing the AR Drone
+## Securing the Wifi connection
+### Compiling WPA
 
 Now that we have a working dev environement, we can compile a real program to put on our drone. Here are the steps to compile `wp_supplicant` wich can be use to secure the wifi between the phone and the drone.
 
 ```sh
-# Download and extract wpa_supplicant
+ # Download and extract wpa_supplicant
 curl -OL http://hostap.epitest.fr/releases/wpa_supplicant-2.0.tar.gz
 tar -zxf wpa_supplicant-2.0.tar.gz
 
-# Copy the default .config file
+ # Copy the default .config file
 cd wpa_supplicant-2.0/wpa_supplicant/
 cp defconfig .config
 nano .config
@@ -154,24 +182,24 @@ nano .config
 Remove or comment the line `CONFIG_DRIVER_NL80211=y` and add those lines a the bottom
 
 ```
-# [...]
+ # [...]
 
-# Driver interface for Linux drivers using the nl80211 kernel interface
-#CONFIG\_DRIVER\_NL80211=y
+ # Driver interface for Linux drivers using the nl80211 kernel interface
+ #CONFIG\_DRIVER\_NL80211=y
 
-# [...]
+ # [...]
 
-expor t SOURCERY=/home/ vagrant /arm􀀀2013.05
-expor t TOOL_PREFIX="${SOURCERY}/ bin /arm􀀀none􀀀l inux􀀀gnueabi "
-expor t CXX="${TOOL_PREFIX}􀀀g++"
-expor t AR="${TOOL_PREFIX}􀀀ar "
-expor t RANLIB="${TOOL_PREFIX}􀀀r a n l i b "
-expor t CC="${TOOL_PREFIX}􀀀gcc "
-expor t LINK="${CXX}"
+export SOURCERY=/home/ vagrant /arm􀀀2013.05
+export TOOL_PREFIX="${SOURCERY}/ bin /arm􀀀none􀀀l inux􀀀gnueabi "
+export CXX="${TOOL_PREFIX}􀀀g++"
+export AR="${TOOL_PREFIX}􀀀ar "
+export RANLIB="${TOOL_PREFIX}􀀀r a n l i b "
+export CC="${TOOL_PREFIX}􀀀gcc "
+export LINK="${CXX}"
 ```
 
 Save and close the file (`ctrl+x`) and run `make`. If everything run without errors, you should have three generated binary in the current folder `wpa_supplicant`, `wpa_cli`, `wpa_passphrase`
 
-#### Install and run WPA on the drone
+### Install and run WPA on the drone
 
 @todo
