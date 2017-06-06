@@ -47,7 +47,6 @@ You can find the python script under `/attack/spoof-navcontrol/spoof.py`. To use
 `python spoof.py [params]`
 
 Params :  
-`--command=X` to set the command `LAND`, `TAKEOFF`, `RESET`  
 `--seq=X` to manually set the sequence number (default: `999999`)  
 `--phoneip=X` to manually set the owner device ip  
 `--droneip=X` to manually set the drone ip (default: `192.168.1.1`)  
