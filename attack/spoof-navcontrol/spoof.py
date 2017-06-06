@@ -49,13 +49,16 @@ config = {
     'seq' : 900000
 }
 
-config.update(args.options)
-if 'command' in config:
-    if config['command'] == 'TAKEOFF' :
+while 1 :
+    command = raw_input("Command : ")
+
+    if command == 'TAKEOFF' :
         takeoff()
-    if config['command'] == 'LAND' :
+    if command == 'LAND' :
         land()
-    if config['command'] == 'RESET' :
+    if command == 'RESET' :
         reset()
-else:
-    print "Error no command given"
+    if command.lower() in ['quit','q','exit'] :
+        break
+    else:
+        print "Unknown command "+command
