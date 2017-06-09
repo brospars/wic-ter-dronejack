@@ -85,7 +85,15 @@ The next attack is to spy on the video stream without the real user knowing. Bec
 4. convert dat files to avi `ffmpeg -f h264 -i *.dat capture.avi`
 
 ### Realtime video streaming
-@todo
+1. be sure that the video streaming is up 
+2. You need to be root 
+3. ffmpeg must be installed
+4. open the video while capturing the packets `python capture_live_videostream.py | ffplay -window_title Video_Ar_Drone2.0 -framedrop -f h264 -i /dev/stdin `
+
+for an unlimited video capture, you should remove the `count=5000` option in capture_live_videostream.py
+
+#### Analyzing Video Stream Packets 
+@todo toutdoux
 
 # Cross compiling for AR Drone (ARM)
 

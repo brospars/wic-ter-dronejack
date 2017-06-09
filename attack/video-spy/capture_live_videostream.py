@@ -1,4 +1,6 @@
-#!/bin/python
+#!/usr/bin/python
+
+# WARNING ** Beware of launch with ROOT user :  python capture_live_videostream.py | ffplay -window_title Video_Ar_Drone2.0 -framedrop -f h264 -i /dev/stdin
 
 from scapy.all import * 
 
